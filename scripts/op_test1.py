@@ -1,8 +1,7 @@
 import time
 import numpy as np
-from instruments.generator import Generator
-from instruments.oscilloscope import Oscilloscope
-from calculation.calculation import calculate_unity_gain_bandwidth
+from instruments import Generator, Oscilloscope
+from calculation import calculate_unity_gain_bandwidth
 from plotting.bode_plot import plot_bode
 import logging
 import os
@@ -143,7 +142,7 @@ def main():
                 plot_bode(freqs, gains, f_t, slope, intercept)
                 logger.info("--- ИТОГОВЫЕ РЕЗУЛЬТАТЫ ---")
                 logger.info(f"Эксперимент завершен успешно. f_T = {f_t/1e6:.3f} МГц")
-                logger.info(f"Наклон (Slope): {slope:.2f} дБ/дек")
+                logger.debug(f"Наклон (Slope): {slope:.2f} дБ/дек")
                 if abs(slope + 20) > 5:
                     logger.warning(f"Аномальный наклон: {slope:.2f} дБ/дек. Ожидалось около -20.")
                 for row in raw_data:
