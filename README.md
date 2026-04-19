@@ -13,12 +13,16 @@
 * Логирование: полная запись хода эксперимента в файлы .log с указанием всех SCPI-команд.
 
 ## Быстрый старт
-### Подготовка окружения и идентификация приборов
-Убедитесь, что у Вас установлены NI-VISA или Keysight VISA драйверы (необходим файл visa32.dll в системной папке).  
-### Клонирование репозитория
+### Подготовка окружения
+Убедитесь, что у Вас установлены NI-VISA или Keysight VISA драйверы (необходим файл visa32.dll в системной папке).
+Склонируйте репозиторий:
 `git clone https://github.com/Anfisa111/automated-operational-amplifier-testing.git`  
 
-`cd automated-operational-amplifier-testing`
+Создайте виртуальное окружение:
+`python -m venv venv`  
+`Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`  
+`.venv\Scripts\activate`  
+`cd automated-operational-amplifier-testing`  
 ### Подключение приборов и настройка конфигурационного файла
 1. Подключите приборы через USB-кабель к Вашему ПК.  
 2. Перейдите в каталог с установленным драйвером прибора.  
@@ -39,7 +43,7 @@
     * scope_addr = "адрес_осциллографа"  
 
 ### Установка зависимостей
-`pip install pyvisa numpy matplotlib`
+`pip install -r requirements.txt`
 
 ### Структура проекта
 instruments/ — драйверы для генератора и осциллографа.  
@@ -53,8 +57,8 @@ utils/ — вспомогательные функции.
 tests/ - тесты.
 
 ### Запуск
-Подключите приборы по USB и запустите основной скрипт:  
-`python op_test1.py`
+Подключите приборы по USB и запустите основной скрипт из корня проекта:  
+`python scripts/op_test1.py`
 
 ## Пример вывода
 После завершения цикла измерений программа построит график и выведет отчет:  
