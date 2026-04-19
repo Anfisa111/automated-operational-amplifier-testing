@@ -65,4 +65,6 @@ tests/ - тесты.
 Частота единичного усиления $f_T$: 0.472 МГц.  
 Наклон АЧХ: -19.4 дБ/дек.  
 
-<img src="docs/img/Figure_4.png" alt="Результат эксперимента" width="600">  
+<p align="center">
+  <img src="docs/img/Figure_4.png" alt="График АЧХ" width="600">
+</p>
