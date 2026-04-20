@@ -27,7 +27,7 @@ class InstrumentsConfig(NamedTuple):
 class ProcessingConfig(NamedTuple):
     gain_threshold: float
 
-def load_config(config_path="config.json"):
+def load_config(config_path="configs/config.json"):
     with open(config_path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
@@ -102,6 +102,7 @@ def main():
         v_amp=config['experiment']['v_amplitude_vpp'],
         ch_in=config['experiment']['input_channel'],
         ch_out=config['experiment']['output_channel'],
+        probe_attenuation=config['experiment']['probe_attenuation']
     )
 
     instr_cfg = InstrumentsConfig(
@@ -129,14 +130,26 @@ def main():
             raw_data = run_measurement_cycle(scope, gen, exp_cfg)
             freqs = np.array([r['freq'] for r in raw_data])
             gains = np.array([r['gain'] for r in raw_data])
+            f_t = 0
+            slope = 0
+            intercept = 0
 
             mask = gains < processing_cfg.gain_threshold
             if np.any(mask):
-                f_t, slope, intercept = calculate_unity_gain_bandwidth(freqs[mask], gains[mask])
-
+                stats = calculate_unity_gain_bandwidth(freqs[mask], gains[mask])
+                if stats:
+                    f_t = stats['c']
+                    slope = stats['a']
+                    intercept = -slope * np.log10(f_t)
+                else:
+                    logger.error(f"Эксперимент прерван. Недостаточно данных для расчета частоты единичного усиления. Рекомендуется увеличить значения частот в конфигурационном файле")
+                    return
+                
                 plot_bode(freqs, gains, f_t, slope, intercept)
                 logger.info("--- ИТОГОВЫЕ РЕЗУЛЬТАТЫ ---")
                 logger.info(f"Эксперимент завершен успешно. f_T = {f_t/1e6:.3f} МГц")
+                f_min, f_max = stats['c_conf']
+                logger.info(f"Доверительный интервал (95%): [{f_min/1e6:.3f}; {f_max/1e6:.3f}] МГц")
                 logger.debug(f"Наклон (Slope): {slope:.2f} дБ/дек")
                 if abs(slope + 20) > 5:
                     logger.warning(f"Аномальный наклон: {slope:.2f} дБ/дек. Ожидалось около -20.")
