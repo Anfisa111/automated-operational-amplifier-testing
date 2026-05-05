@@ -1,22 +1,20 @@
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.stats import t
-import statsmodels.api as sm
-import statsmodels.formula.api as smf
+import logging
+
+logger = logging.getLogger(__name__)
 
 def calculate_unity_gain_bandwidth(freqs, gains_db, alpha=0.05):
     """
-    Находит a и c из уравнения a*lg(f/c) и их доверительные интервалы.
+    Нахождение параметров a и c из уравнения a*lg(f/c) и их доверительных интервалов.
     """
     if len(freqs) < 2:
         return None
 
-    # Определение функции модели
     def model_func(f, a, c):
         return a * (np.log10(f) - np.log10(c))
 
-    # Начальное приближение (важно для нелинейных методов)
-    # По умолчанию берем наклон -20 и f_t из середины диапазона
     p0 = [-20, freqs.mean()]
 
     try:
@@ -26,7 +24,7 @@ def calculate_unity_gain_bandwidth(freqs, gains_db, alpha=0.05):
         
         a_fit, c_fit = popt
         
-        # Стандартные ошибки параметров (квадратный корень из диагонали матрицы)
+        # Стандартные ошибки параметров
         perr = np.sqrt(np.diag(pcov))
         
         # Квантиль t-распределения Стьюдента для интервала
@@ -43,6 +41,8 @@ def calculate_unity_gain_bandwidth(freqs, gains_db, alpha=0.05):
             'c': c_fit,
             'c_conf': c_interval
         }
-    except Exception:
+    
+    except Exception as e:
+        logger.error(f"Ошибка при выполнении аппроксимации curve_fit: {e}")
         return None
     

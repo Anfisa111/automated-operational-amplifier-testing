@@ -1,7 +1,7 @@
 import pyvisa
 import time
 import logging
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,11 @@ class InstrumentBase:
                 logger.debug(f"ResourceManager создан с DLL: {cls._dll_path}")
             except Exception as e:
                 logger.error(f"Ошибка загрузки VISA DLL: {e}")
-                cls._rm = pyvisa.ResourceManager()
+                try:
+                    cls._rm = pyvisa.ResourceManager()
+                except Exception as final_e:
+                    logger.critical(f"VISA библиотека не найдена! Проверьте установку драйверов: {final_e}")
+                    raise
         return cls._rm
     
     def __init__(self, resource_name: str, timeout: int = 10000):
@@ -37,18 +41,18 @@ class InstrumentBase:
             
             time.sleep(0.2)
             self.idn = self.instrument.query("*IDN?")
-            logger.info(f"Connected to: {self.idn}")
-
-            # self.instrument.write("*RST")
-            # self.instrument.write("*CLS")
+            logger.info(f"Подключены к {self.idn}")
             
             self._configure()
             
             return self
         
         except pyvisa.VisaIOError as e:
-            logger.error(f"Cannot connect to {self.resource_name}: {e}")
+            logger.error(f"Ошибка связи VISA при подключении к {self.resource_name}: {e}")
             self.cleanup()
+            raise
+        except ValueError as e:
+            logger.error(f"Неверные параметры ресурса {self.resource_name}: {e}")
             raise
 
     @abstractmethod
@@ -71,41 +75,34 @@ class InstrumentBase:
             raise ConnectionError(f"{self.resource_name} is not connected")
         
         try:
-            response = self.instrument.query(command).strip()
+            raw_response = self.instrument.query(command)
+            if raw_response is None:
+                raise pyvisa.VisaIOError("Прибор вернул пустой ответ")
+            
+            response = raw_response.strip()
             logger.debug(f"QUERY: {command} -> {response}")
             return response
         except pyvisa.VisaIOError as e:
-            logger.error(f"Error query '{command}': {e}")
+            logger.error(f"Ошибка при запросе '{command}': {e}")
             raise
 
     def disconnect(self):
         if self.instrument:
             try:
-                # self.instrument.write("*RST")
-                # self.instrument.write("*CLS")
                 self.instrument.close()
-                logger.info(f"Disconnected: {self.resource_name}")
+                logger.info(f"Отключен прибор {self.resource_name}")
             
             except Exception as e:
-                logger.warnin(f"Error disconnecting: {e}")
+                logger.warning(f"Ошибка при отключении прибора: {e}")
 
             finally:
                 self.instrument = None
 
     def cleanup(self):
         self.disconnect()
-            # if self.instrument:
-            #     try:
-            #         self.instrument.close()
-            #     except:
-            #         pass
-            #     self.instrument = None
-            # self.connected = False
             
     def __enter__(self):
         return self.connect()
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, _exc_type, _exc_val, _exc_tb):
         self.disconnect()
-    # def __del__(self):
-    #     self.disconnect()

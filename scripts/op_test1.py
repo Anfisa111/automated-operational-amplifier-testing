@@ -1,5 +1,6 @@
 import time
 import json
+import pyvisa
 import numpy as np
 from utils.logger import setup_logging
 from utils.formatters import auto_scale_channel
@@ -28,8 +29,15 @@ class ProcessingConfig(NamedTuple):
     gain_threshold: float
 
 def load_config(config_path="configs/config.json"):
-    with open(config_path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        logger.error(f"Конфигурационный файл {config_path} не найден!")
+        raise
+    except json.JSONDecodeError as e:
+        logger.error(f"Ошибка парсинга JSON в {config_path}: {e}")
+        raise
 
 def setup_instruments(scope, gen, exp_cfg: ExperimentConfig):
     logger.info(f"Инициализация оборудования: {gen.idn}, {scope.idn}")
@@ -84,7 +92,7 @@ def run_measurement_cycle(scope, gen, exp_cfg: ExperimentConfig):
         v_in = scope.get_vpp(exp_cfg.ch_in)
         v_out = scope.get_vpp(exp_cfg.ch_out)
 
-        if v_in > 0:
+        if v_in > 1e-6 and v_out > 1e-6:
             gain_db = 20 * np.log10(v_out / v_in)
             logger.info(f"Результат: Vin={v_in:.3f}V, Vout={v_out:.3f}V, Gain={gain_db:.2f}dB")
             results.append({'freq': freq, 'v_in': v_in, 'v_out': v_out, 'gain': gain_db})
@@ -128,6 +136,9 @@ def main():
         with Oscilloscope(instr_cfg.scope_addr) as scope, Generator(instr_cfg.gen_addr) as gen:
             setup_instruments(scope, gen, exp_cfg)
             raw_data = run_measurement_cycle(scope, gen, exp_cfg)
+            if len(raw_data) < 2:
+                logger.error("Слишком мало успешных измерений для построения графика.")
+                return
             freqs = np.array([r['freq'] for r in raw_data])
             gains = np.array([r['gain'] for r in raw_data])
             f_t = 0
@@ -159,6 +170,12 @@ def main():
                 logger.error("Расчет f_T невозможен: ни одна точка не попала под фильтр (gain < -2dB).")
                 print("Недостаточно данных для расчета. Проверьте диапазон частот.")
     
+    except FileNotFoundError as e:
+        logger.error(f"Файл конфигурации не найден: {e}")
+    except json.JSONDecodeError as e:
+        logger.error(f"Ошибка в формате JSON-конфигурации: {e}")
+    except pyvisa.VisaIOError as e:
+        logger.error(f"Критическая ошибка оборудования VISA: {e}")
     except Exception as e:
         logger.error("Критический сбой программы", exc_info=True)
 
