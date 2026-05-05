@@ -2,6 +2,7 @@ import pyvisa
 import time
 import logging
 from abc import abstractmethod
+from typing import Optional, Type, Any
 
 logger = logging.getLogger(__name__)
 
@@ -10,7 +11,7 @@ class InstrumentBase:
     _dll_path = 'C:/Windows/System32/visa32.dll'
     
     @classmethod
-    def _get_rm(cls):
+    def get_rm(cls) -> pyvisa.ResourceManager:
         if cls._rm is None:
             try:
                 cls._rm = pyvisa.ResourceManager(cls._dll_path)
@@ -59,7 +60,7 @@ class InstrumentBase:
     def _configure(self):
         pass
 
-    def write(self, command: str):
+    def write(self, command: str) -> None:
         if self.instrument is None:
             raise ConnectionError(f"Прибор {self.resource_name} не подключен")
         
@@ -86,7 +87,7 @@ class InstrumentBase:
             logger.error(f"Ошибка при запросе '{command}': {e}")
             raise
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         if self.instrument:
             try:
                 self.instrument.close()
@@ -98,11 +99,15 @@ class InstrumentBase:
             finally:
                 self.instrument = None
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         self.disconnect()
             
-    def __enter__(self):
+    def __enter__(self) -> 'InstrumentBase':
         return self.connect()
     
-    def __exit__(self, _exc_type, _exc_val, _exc_tb):
+    def __exit__(self,
+                 _exc_type: Optional[Type[BaseException]],
+                 _exc_val: Optional[BaseException],
+                 _exc_tb: Any
+    ) -> None:
         self.disconnect()

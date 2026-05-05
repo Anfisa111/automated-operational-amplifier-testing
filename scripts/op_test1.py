@@ -7,10 +7,12 @@ from utils.formatters import auto_scale_channel
 from utils.formatters import format_time_scale
 from instruments.generator import Generator
 from instruments.oscilloscope import Oscilloscope
+from instruments.base import InstrumentBase
 from calculation import calculate_unity_gain_bandwidth
 from plotting.bode_plot import plot_bode
 from typing import NamedTuple
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +30,7 @@ class InstrumentsConfig(NamedTuple):
 class ProcessingConfig(NamedTuple):
     gain_threshold: float
 
-def load_config(config_path="configs/config.json"):
+def load_config(config_path: str ="configs/config.json") -> dict[str, Any]:
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
             return json.load(f)
@@ -39,7 +41,7 @@ def load_config(config_path="configs/config.json"):
         logger.error(f"Ошибка парсинга JSON в {config_path}: {e}")
         raise
 
-def setup_instruments(scope, gen, exp_cfg: ExperimentConfig):
+def setup_instruments(scope: Oscilloscope, gen: Generator, exp_cfg: ExperimentConfig) -> None:
     logger.info(f"Инициализация оборудования: {gen.idn}, {scope.idn}")
     try:
         gen.reset()
@@ -70,7 +72,7 @@ def setup_instruments(scope, gen, exp_cfg: ExperimentConfig):
         logger.error(f"Ошибка при настройке приборов: {e}")
         raise
 
-def run_measurement_cycle(scope, gen, exp_cfg: ExperimentConfig):
+def run_measurement_cycle(scope: Oscilloscope, gen: Generator, exp_cfg: ExperimentConfig) -> list[dict]:
     results = []
     for freq in exp_cfg.frequencies:
         logger.info(f"Запуск теста на частоте {freq/1e6:.3f} МГц")
@@ -123,7 +125,7 @@ def main():
     )
 
 
-    rm = Oscilloscope._get_rm()
+    rm = InstrumentBase.get_rm()
     resources = rm.list_resources()
     logger.debug(f"Доступные приборы: {resources}")
 

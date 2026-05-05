@@ -20,7 +20,7 @@ class Oscilloscope(InstrumentBase):
             logger.error(f"Ошибка протокола при настройке терминации: {e}")
             raise
 
-    def set_channel_display(self, channel: int, state: bool):
+    def set_channel_display(self, channel: int, state: bool) -> None:
         """Включить/выключить отображение канала (CH1-CH4)."""
         if not isinstance(channel, int) or not isinstance(state, bool):
             raise TypeError("channel должен быть int, state должен быть bool")
@@ -32,7 +32,7 @@ class Oscilloscope(InstrumentBase):
             logger.error(f"Не удалось изменить отображение CH{channel}: {e}")
             raise
 
-    def set_channel_scale(self, channel: int, scale: str):
+    def set_channel_scale(self, channel: int, scale: str) -> None:
         """Установить масштаб (например, '100mV', '2V')."""
         if not isinstance(scale, str):
             raise TypeError("Масштаб (scale) должен быть строкой, например '100mV'")
@@ -43,7 +43,7 @@ class Oscilloscope(InstrumentBase):
             logger.error(f"Ошибка при установке масштаба CH{channel}: {e}")
             raise
 
-    def set_channel_coupling(self, channel: int, coupling: str):
+    def set_channel_coupling(self, channel: int, coupling: str) -> None:
         """Установить режим связи канала: AC, DC или GND."""
         if not isinstance(coupling, str) or coupling.upper() not in ['AC', 'DC', 'GND']:
             raise ValueError(f"Недопустимый тип связи: {coupling}. Ожидается AC, DC или GND.")
@@ -56,7 +56,7 @@ class Oscilloscope(InstrumentBase):
             logger.error(f"Ошибка при установке режима связи для CH{channel}: {e}")
             raise
         
-    def set_probe_attenuation(self, channel: int, attenuation: int):
+    def set_probe_attenuation(self, channel: int, attenuation: int) -> None:
         """Установить делитель щупа (1, 10)."""
         if attenuation not in [1, 10]:
             raise ValueError(f"Нетипичный делитель щупа: {attenuation}X. Проверьте настройки.")
@@ -69,7 +69,7 @@ class Oscilloscope(InstrumentBase):
             raise
 
     # --- Временная база и триггер ---
-    def set_horizontal_scale(self, scale: str):
+    def set_horizontal_scale(self, scale: str) -> None:
         """Установить развертку времени (например, '1.0ms', '200us')."""
         if not isinstance(scale, str):
             raise TypeError("Развертка времени должна быть строкой (напр. '1.0ms')")
@@ -80,7 +80,7 @@ class Oscilloscope(InstrumentBase):
             logger.error(f"Ошибка при изменении временной развертки: {e}")
             raise
 
-    def setup_trigger(self, source: str = "CH1", mode: str = "AUTO", level: float = 0.0):
+    def setup_trigger(self, source: str = "CH1", mode: str = "AUTO", level: float = 0.0) -> None:
         """Настроить триггер."""
         if not isinstance(level, (int, float)):
             raise TypeError("Уровень триггера должен быть числом")
@@ -94,7 +94,7 @@ class Oscilloscope(InstrumentBase):
             raise
 
     # --- Управление состоянием ---
-    def run(self):
+    def run(self) -> None:
         """Запустить сбор данных."""
         try:
             self.write(":RUNning RUN")
@@ -103,7 +103,7 @@ class Oscilloscope(InstrumentBase):
             logger.error(f"Не удалось запустить сбор данных (RUN): {e}")
             raise
 
-    def stop(self):
+    def stop(self) -> None:
         """Остановить сбор данных."""
         try:
             self.write(":RUNning STOP")

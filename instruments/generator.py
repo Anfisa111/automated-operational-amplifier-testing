@@ -86,7 +86,7 @@ class Generator(InstrumentBase):
             logger.error(f"Ошибка VISA при установке амплитуды: {e}")
             raise
     
-    def set_offset(self, offset) -> 'Generator':
+    def set_offset(self, offset: float) -> 'Generator':
         """Установить смещение в Volts"""
         if not isinstance(offset, (int, float)):
             raise TypeError("Смещение должно быть числом")
