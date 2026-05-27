@@ -1,0 +1,19 @@
+{
+  "instruments": {
+    "generator_address": "USB0::0x6656::0x0834::AWG1224090049::INSTR",
+    "oscilloscope_address": "USB0::0x5345::0x1235::24410241::INSTR"
+  },
+  "experiment": {
+    "v_amplitude": 0.1,
+    "channel_input": 1,
+    "channel_output": 2,
+    "probe_attenuation": 10,
+    "freq_start_hz": 100000,
+    "freq_stop_hz": 5000000,
+    "freq_points": 25
+  },
+  "processing": {
+    "gain_threshold": -3.0,
+    "delta_target_hz": 100000
+  }
+}

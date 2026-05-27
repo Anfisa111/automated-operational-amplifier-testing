@@ -36,3 +36,5 @@ def plot_bode(frequencies, gains, f_t, slope, intercept, save_path='bode_plot.pn
     plt.savefig(save_path, dpi=300)
     print(f"График успешно сохранен в: {save_path}")
     plt.show()
+    plt.pause(0.1)
+    plt.close()

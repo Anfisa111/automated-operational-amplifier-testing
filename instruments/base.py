@@ -30,7 +30,7 @@ class InstrumentBase:
         self.timeout = timeout
         self.instrument = None
         self.idn = None
-        self.rm = self._get_rm()
+        self.rm = self.get_rm()
 
     def connect(self) -> 'InstrumentBase':
         if self.instrument is not None:

@@ -1,11 +1,11 @@
 {
   "instruments": {
     "generator_addr": "USB0::0x6656::0x0834::AWG1224500035::INSTR",
-    "scope_addr": "USB0::0x5345::0x1235::24410233::INSTR"
+    "scope_addr": "USB0::0x5345::0x1235::24410238::INSTR"
   },
   "experiment": {
-    "frequencies": [1000000, 1400000, 2000000],
-    "v_amplitude_vpp": 0.3,
+    "frequencies": [400000, 800000, 1000000, 1200000, 1400000],
+    "v_amplitude_vpp": 0.4,
     "input_channel": 1,
     "output_channel": 2,
     "probe_attenuation": 10

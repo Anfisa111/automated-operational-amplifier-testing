@@ -3,6 +3,7 @@ import pyvisa
 import time
 import re
 import logging
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ class Oscilloscope(InstrumentBase):
         
         try:
             self.write(f":CH{channel}:SCALe {scale}")
+            time.sleep(0.1)
         except pyvisa.VisaIOError as e:
             logger.error(f"Ошибка при установке масштаба CH{channel}: {e}")
             raise
@@ -112,22 +114,33 @@ class Oscilloscope(InstrumentBase):
             logger.error(f"Не удалось остановить сбор данных (STOP): {e}")
             raise 
 
+    def clear(self) -> None:
+        """Очистить буфер ввода-вывода осциллографа."""
+        try:
+            if self.instrument:
+                self.instrument.clear()
+        except pyvisa.VisaIOError as e:
+            logger.warning(f"Не удалось очистить буфер осциллографа: {e}")
+
     # --- Получение данных ---
     def get_vpp(self, channel: int) -> float:
         try:
-            # Команда возвращает число в научной нотации, например '1.020E+00'
-            raw_response = self.query(f":MEASUrement:CH{channel}:PKPK?")
-            match = re.search(r"([-+]?\d*\.\d+|\d+)", raw_response)
-            if not match:
-                logger.warning(f"Не удалось распарсить Vpp для CH{channel}: {raw_response}")
+            # Делаем 3 запроса и берем медиану
+            values = []
+            for _ in range(3):
+                raw_response = self.query(f":MEASUrement:CH{channel}:PKPK?")
+                match = re.search(r"([-+]?\d*\.\d+|\d+)", raw_response)
+                if match:
+                    value = float(match.group(1))
+                    if "mV" in raw_response:
+                        value /= 1000.0
+                    values.append(value)
+                time.sleep(0.05)
+            
+            if not values:
                 return 0.0
-        
-            value = float(match.group(1))
-            if "mV" in raw_response:
-                value /= 1000.0
-        
-            return value
-        
+                
+            return float(np.median(values))
         except pyvisa.VisaIOError as e:
             logger.error(f"Ошибка связи при замере Vpp на CH{channel}: {e}")
             return 0.0

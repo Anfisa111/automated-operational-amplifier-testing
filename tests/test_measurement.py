@@ -1,4 +1,4 @@
-from scripts.op_test1 import run_measurement_cycle, ExperimentConfig
+from archive.op_test1 import run_measurement_cycle, ExperimentConfig
 from unittest.mock import MagicMock
 
 def test_measurement_cycle_flow():
