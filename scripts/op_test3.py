@@ -125,10 +125,10 @@ def run_single_measurement_cycle(scope: Oscilloscope, generator: Generator,
 
 def main() -> None:
     setup_logging()
-    logger.info("Программа автоматического измерения UGBW ОУ запущена.")
+    logger.info("Программа автоматического измерения частоты единичного усиления ОУ запущена.")
     try:
         config_data = load_config()
-        config_data = clean_config_strings(config_data) # 🔥 Ключевое исправление
+        config_data = clean_config_strings(config_data)
         
         inst_config = InstrumentsConfig(
             gen_addr=str(config_data["instruments"]["generator_address"]),
@@ -178,17 +178,15 @@ def main() -> None:
             
             for i in range(MAX_ITERATIONS):
                 current_freqs = np.random.permutation(freq_grid)
-                logger.info(f"--- Проход #{i+1} (частоты перемешаны) ---")
+                logger.info(f"--- Проход #{i+1} ---")
                 
                 stats, raw_data = run_single_measurement_cycle(scope, generator, current_freqs, proc_cfg, exp_cfg)
                 
                 if stats is not None:
-                    # Сохраняем f_t для статистики
                     f_t_results.append(stats['f_t'])
                     last_raw_data = raw_data
-                    last_stats = stats  # ← Сохраняем последние полные stats
+                    last_stats = stats
                     
-                    # 🔥 Логируем ВСЕ параметры из расчета
                     logger.info(f"✅ Проход успешен:")
                     logger.info(f"   f_T = {stats['f_t']/1e6:.4f} МГц")
                     logger.info(f"   Наклон (slope) = {stats['slope']:.2f} дБ/дек")
@@ -207,7 +205,7 @@ def main() -> None:
                         n_min = get_required_n_min(f_t_results, proc_cfg.delta_target, alpha=0.05)
                         logger.info(f"Статистика: n={n}, n_min={n_min} (целевая Δ≤{proc_cfg.delta_target/1e3:.1f} кГц)")
                         if n >= n_min:
-                            logger.info("✅ Условие сходимости выполнено. Досрочная остановка.")
+                            logger.info("✅ Условие n = n_min выполнено. Досрочная остановка.")
                             break
                 else:
                     logger.warning(f"Проход #{i+1} не дал валидного f_T. Повтор...")
@@ -232,9 +230,8 @@ def main() -> None:
                     freqs_plot = [p['freq'] for p in last_raw_data]
                     gains_plot = [p['gain'] for p in last_raw_data]
                     
-                    # ✅ Используем РЕАЛЬНЫЙ наклон из последней аппроксимации
                     f_t_val = max(float(f_t_avg), 1.0)
-                    slope_val = last_stats.get('slope', -20.0)  # Реальный или фолбэк
+                    slope_val = last_stats.get('slope', -20.0)
                     intercept_val = last_stats.get('intercept', 20.0 * np.log10(f_t_val))
                     
                     plot_bode(freqs_plot, gains_plot, f_t_val, slope_val, intercept_val)
